@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: ecommerce_prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  graphql:
+    graphiql:
+      enabled: true
+    schema:
+      locations: classpath:graphql/
+      file-extensions: .graphqls
+
+springdoc:
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    org.ecommerce.v1: WARM
