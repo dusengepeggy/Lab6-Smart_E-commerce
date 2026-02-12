@@ -8,6 +8,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -33,5 +35,8 @@ public class Order extends BaseEntity {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
+
+    @OneToMany(mappedBy = "order" , fetch = FetchType.LAZY)
+    private List<OrderItem> orderItems = new ArrayList<>();
 
 }
