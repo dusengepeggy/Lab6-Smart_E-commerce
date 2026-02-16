@@ -19,8 +19,8 @@ public abstract class BaseEntity {
     )
     private Long id;
 
-    @Version
-    Long version;
+//    @Version
+//    Long version;
 
     @Column(updatable = false,nullable = false)
     private LocalDateTime createdAt;

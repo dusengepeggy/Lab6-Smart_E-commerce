@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 @SQLRestriction("deleted = false")
 @NoArgsConstructor
 public class Product extends BaseEntity {
-    private Long productId;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;

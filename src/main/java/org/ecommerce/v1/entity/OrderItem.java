@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @Table(name="order_items")
 @SQLDelete(sql = "UPDATE order_items SET deleted = true, deleted_at = now() WHERE id = ?")
 @SQLRestriction("deleted = false")
-public class OrderItem {
+public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id",
             nullable = false

@@ -10,7 +10,12 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Setter
 @Getter
-@Table(name = "reviews")
+@Table(name = "reviews",
+        indexes = {
+                @Index(name = "idx_review_product", columnList = "product_id"),
+                @Index(name = "idx_review_user", columnList = "user_id")
+        }
+)
 @SQLDelete(sql = "UPDATE reviews SET deleted = true, deleted_at = now() WHERE id = ?")
 @SQLRestriction("deleted = false")
 @NoArgsConstructor
