@@ -3,7 +3,7 @@ package org.ecommerce.v1.service;
 import lombok.RequiredArgsConstructor;
 import org.ecommerce.v1.entity.Role;
 import org.ecommerce.v1.utils.exceptions.NotFoundException;
-import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -24,17 +24,18 @@ import org.ecommerce.v1.dto.ResponseDto.UserDTO;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @CacheEvict(value = "users", allEntries = true)
     public UserDTO register(RegisterRequest request) {
 
-        String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(hashedPassword);
-        user.setRole(request.getRole() != null ? request.getRole() : Role.CUSTOMER);
+        user.setRole(Role.CUSTOMER);
 
         userRepository.save(user);
 

@@ -10,6 +10,7 @@ import org.ecommerce.v1.service.CategoryService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +21,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<CategoryDTO>> createCategory(@RequestBody UpdateCategoryRequest request) {
         CategoryDTO category = categoryService.createCategory(request);
         SuccessResponse<CategoryDTO> res = new SuccessResponse<>("Category added successfully", category);
@@ -56,6 +58,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<CategoryDTO>> updateCategory(
             @PathVariable Long id,
             @RequestBody UpdateCategoryRequest request
@@ -66,6 +69,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<String>> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         SuccessResponse<String> res = new SuccessResponse<>("Category deleted successfully");

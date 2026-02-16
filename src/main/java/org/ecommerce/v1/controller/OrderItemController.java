@@ -12,6 +12,7 @@ import org.ecommerce.v1.service.OrderItemService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class OrderItemController {
     private final OrderItemService orderItemService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public ResponseEntity<SuccessResponse<OrderItemDTO>> createOrderItem(@RequestBody CreateOrderItemRequest request) {
         OrderItem orderItem = orderItemService.createOrderItem(
                 request.getOrderId(),

@@ -11,6 +11,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import java.math.BigDecimal;
@@ -25,8 +26,10 @@ public class GraphQLController {
     private final OrderService orderService;
     private final OrderItemService orderItemService;
     private final ReviewService reviewService;
+    private final SecurityService securityService;
 
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public PagedResponse<ProductDTO> products(
             @Argument Integer page,
             @Argument Integer size,
@@ -55,11 +58,13 @@ public class GraphQLController {
     }
 
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public ProductDetailDTO product(@Argument Long id) {
         return productService.getProductById(id);
     }
 
     @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public PagedResponse<OrderDTO> orders(
             @Argument Integer page,
             @Argument Integer size,
@@ -73,6 +78,9 @@ public class GraphQLController {
         String sort = sortBy != null ? sortBy : "createdAt";
         String direction = sortDir != null ? sortDir : "desc";
         OrderStatus orderStatus = status != null ? OrderStatus.valueOf(status) : null;
+        if (!securityService.isAdmin()) {
+            userId = securityService.getCurrentUserId();
+        }
 
         Page<Order> result = orderService.getAllOrdersPaged(pageNum, pageSize, sort, direction, userId, orderStatus);
         List<OrderDTO> orderDTOs = result.getContent().stream()
@@ -89,6 +97,7 @@ public class GraphQLController {
     }
 
     @QueryMapping
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isOrderOwner(#id)")
     public OrderDTO order(@Argument Long id) {
         Order order = orderService.getOrderById(id);
         return convertOrderToDTO(order);
@@ -102,6 +111,7 @@ public class GraphQLController {
     }
 
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public PagedResponse<ReviewDTO> reviews(
             @Argument Integer page,
             @Argument Integer size,
@@ -130,6 +140,7 @@ public class GraphQLController {
     }
 
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public ReviewDTO review(@Argument Long id) {
         Review review = reviewService.getReviewById(id);
         return convertReviewToDTO(review);
@@ -137,18 +148,24 @@ public class GraphQLController {
 
 
     @MutationMapping
+    @PreAuthorize("isAuthenticated()")
     public ReviewDTO createReview(
             @Argument Long userId,
             @Argument Long productId,
             @Argument Integer rating,
             @Argument String comment
     ) {
+        Long effectiveUserId = securityService.getCurrentUserId();
+        if (!securityService.isAdmin()) {
+            userId = effectiveUserId;
+        }
         CreateReviewRequest request = new CreateReviewRequest(userId, productId, rating, comment);
         Review review = reviewService.createReview(request);
         return convertReviewToDTO(review);
     }
 
     @MutationMapping
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isReviewOwner(#id)")
     public ReviewDTO updateReview(
             @Argument Long id,
             @Argument Integer rating,
@@ -160,6 +177,7 @@ public class GraphQLController {
     }
 
     @MutationMapping
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isReviewOwner(#id)")
     public boolean deleteReview(@Argument Long id) {
         reviewService.deleteReview(id);
         return true;

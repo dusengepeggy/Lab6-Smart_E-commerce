@@ -13,9 +13,12 @@ import org.ecommerce.v1.entity.OrderItem;
 import org.ecommerce.v1.entity.OrderStatus;
 import org.ecommerce.v1.service.OrderItemService;
 import org.ecommerce.v1.service.OrderService;
+import org.ecommerce.v1.service.SecurityService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,8 +32,10 @@ public class OrderController {
 
     private final OrderService orderService;
     private final OrderItemService orderItemService;
+    private final SecurityService securityService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'STAFF')")
     public ResponseEntity<SuccessResponse<OrderDTO>> createOrder(@RequestBody CreateOrderRequest request) {
         Order order = orderService.createOrder(request.getUserId());
         SuccessResponse<OrderDTO> res = new SuccessResponse<>("Order created successfully", convertToDTO(order));
@@ -38,6 +43,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or @securityService.isOrderOwner(#id)")
     public ResponseEntity<SuccessResponse<OrderDTO>> getOrderById(@PathVariable Long id) {
         Order order = orderService.getOrderById(id);
         SuccessResponse<OrderDTO> res = new SuccessResponse<>("Order retrieved successfully", convertToDTO(order));
@@ -45,14 +51,22 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF', 'CUSTOMER')")
     public ResponseEntity<SuccessResponse<PagedResponse<OrderDTO>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) OrderStatus status
+            @RequestParam(required = false) OrderStatus status,
+            Authentication authentication
     ) {
+        Long effectiveUserId = securityService.getCurrentUserId();
+        boolean adminOrStaff = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_STAFF"));
+        if (!adminOrStaff && effectiveUserId != null) {
+            userId = effectiveUserId;
+        }
         Page<Order> orders = orderService.getAllOrdersPaged(page, size, sortBy, sortDir, userId, status);
         List<OrderDTO> orderDTOs = orders.getContent().stream()
                 .map(this::convertToDTO)
@@ -71,6 +85,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<SuccessResponse<OrderDTO>> updateOrderStatus(
             @PathVariable Long id,
             @RequestBody UpdateOrderRequest request
@@ -81,6 +96,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<String>> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         SuccessResponse<String> res = new SuccessResponse<>("Order deleted successfully");

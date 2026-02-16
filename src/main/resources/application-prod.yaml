@@ -18,6 +18,25 @@ spring:
     schema:
       locations: classpath:graphql/
       file-extensions: .graphqls
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: profile, email
+        provider:
+          google:
+            user-name-attribute: sub
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    expiration-ms: 86400000
+  oauth2:
+    redirect-uri: ${OAUTH2_REDIRECT_URI}
+
 
 springdoc:
   swagger-ui:
@@ -26,3 +45,4 @@ springdoc:
 logging:
   level:
     org.ecommerce.v1: WARM
+    org.springframework.security: INFO

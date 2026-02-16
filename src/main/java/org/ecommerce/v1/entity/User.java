@@ -19,9 +19,13 @@ public class User extends BaseEntity {
     private String username;
     @Column(nullable = false, unique = true)
     private String email;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
+    @Column(name = "oauth2_provider")
+    private String oauth2Provider;
+    @Column(name = "oauth2_subject")
+    private String oauth2Subject;
 }

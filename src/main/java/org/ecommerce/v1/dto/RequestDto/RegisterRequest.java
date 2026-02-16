@@ -25,7 +25,6 @@ public class RegisterRequest {
             message = "Password must contain uppercase, lowercase, number, and special character"
     )
     private String password;
-    @NotNull(message = "Role is required")
     private Role role;
 
     public RegisterRequest(String username, Role role) {

@@ -16,6 +16,7 @@ import org.ecommerce.v1.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +27,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Get all users",
             description = "Fetches a paginated list of all registered users"
@@ -65,6 +67,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<String>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         SuccessResponse<String> res = new SuccessResponse<>("User account deleted successfully");
@@ -72,6 +75,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isCurrentUser(#id)")
     public ResponseEntity<SuccessResponse<UserDTO>> getUserById(@PathVariable Long id) {
         UserDTO user = userService.getUserById(id);
         SuccessResponse<UserDTO> res = new SuccessResponse<>("User retrieved successfully", user);
@@ -79,6 +83,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isCurrentUser(#id)")
     public ResponseEntity<SuccessResponse<UserDTO>> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request

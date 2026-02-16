@@ -1,252 +1,107 @@
-# Smart E-Commerce System
+# Smart E-Commerce System – Spring Security
 
-A Spring Boot application implementing a complete e-commerce backend with Spring Data JPA, caching, transaction management, and optimized query strategies.
+REST (and GraphQL) backend with **JWT authentication**, **Google OAuth2**, **RBAC**, **CORS/CSRF** configuration, and **security event logging**.
 
-## Technology Stack
+## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Framework | Spring Boot 4.x |
-| Language | Java 17 |
-| Database | PostgreSQL |
-| ORM | Spring Data JPA / Hibernate |
-| Caching | Spring Cache with Caffeine |
-| API Documentation | OpenAPI (Swagger) |
-| Query Language | GraphQL + REST |
+- **Java 21**, **Spring Boot 4.x**
+- **Spring Security** (JWT, OAuth2 Client)
+- **BCrypt** password hashing, **HMAC-SHA256** JWT signatures
+- **PostgreSQL**, JPA
 
-## Project Structure
+## Quick Start
 
-```
-src/main/java/org/ecommerce/v1/
-├── config/           # Configuration classes (Cache, OpenAPI)
-├── controller/       # REST and GraphQL controllers
-├── dto/              # Data Transfer Objects
-├── entity/           # JPA entities
-├── repository/       # Spring Data JPA repositories
-├── service/          # Business logic layer
-├── utils/            # Utilities and exception handlers
-└── aspect/           # AOP aspects (logging, performance)
-```
+1. **Environment**
+   - Set `DB_URL`, `DB_USER`, `DB_PASSWORD` for PostgreSQL.
+   - (Optional) Set `APP_JWT_SECRET` (min 32 chars) and `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` for OAuth2.
 
-## Setup Instructions
-
-### Prerequisites
-- Java 17+
-- PostgreSQL database
-- Maven 3.8+
-
-### Environment Variables
-Set the following environment variables:
-```bash
-DB_URL=jdbc:postgresql://localhost:5432/ecommerce
-DB_USER=your_username
-DB_PASSWORD=your_password
-```
-
-### Running the Application
-```bash
-./mvnw spring-boot:run
-```
-
-### API Documentation
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- GraphQL Playground: `http://localhost:8080/graphiql`
-
-## Repository Layer
-
-### Repository Interfaces
-All repositories extend `JpaRepository` providing built-in CRUD, pagination, and sorting.
-
-| Repository | Entity | Key Methods |
-|------------|--------|-------------|
-| ProductRepository | Product | findByCategoryId, findByPriceBetween, findByCategoryName (JPQL) |
-| OrderRepository | Order | findByUserId, findByStatus, findOrderHistoryByUserId (JPQL), getDailySalesReport (Native) |
-| OrderItemRepository | OrderItem | findByOrderId, findTopSellingProducts (JPQL), findTopSellingProductsLimited (Native) |
-| UserRepository | User | findByUsernameContainingIgnoreCase, findByRole |
-| CategoryRepository | Category | findByCategoryNameContainingIgnoreCase, existsByCategoryName |
-| ReviewRepository | Review | findByProductId, getAverageRatingByProductId (JPQL) |
-| InventoryRepository | Inventory | findByProductId |
-
-### Query Types
-
-**Derived Queries:**
-```java
-Page<Product> findByProductNameContainingIgnoreCase(String name, Pageable pageable);
-Page<Order> findByUserIdAndStatus(Long userId, OrderStatus status, Pageable pageable);
-```
-
-**JPQL Queries:**
-```java
-@Query("SELECT p FROM Product p JOIN p.category c WHERE c.categoryName = :categoryName")
-Page<Product> findByCategoryName(@Param("categoryName") String categoryName, Pageable pageable);
-
-@Query("SELECT AVG(r.rating) FROM Review r WHERE r.product.id = :productId")
-Double getAverageRatingByProductId(@Param("productId") Long productId);
-```
-
-**Native SQL Queries:**
-```java
-@Query(value = "SELECT p.* FROM products p JOIN inventories i ON p.id = i.product_id " +
-        "WHERE i.stock_quantity > 0 ORDER BY i.stock_quantity DESC", nativeQuery = true)
-List<Product> findInStockProductsOrderedByAvailability();
-```
-
-## Transaction Management
-
-### Configuration
-Transactions are managed using `@Transactional` with specific configurations for critical operations.
-
-### Isolation Levels
-- **REPEATABLE_READ**: Used for order creation and stock management to prevent dirty reads and non-repeatable reads
-- **READ_COMMITTED**: Default for most read operations
-
-### Propagation
-- **REQUIRED**: Default propagation, joins existing transaction or creates new
-- **rollbackFor = Exception.class**: Ensures rollback on any exception
-
-### Example: Order Item Creation with Stock Validation
-```java
-@Transactional(isolation = Isolation.REPEATABLE_READ, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-public OrderItem createOrderItem(Long orderId, Long productId, Long quantity) {
-    // Validates stock availability
-    // Deducts from inventory
-    // Creates order item
-    // Recalculates order total
-    // Rolls back ALL changes if any step fails
-}
-```
-
-### Rollback Scenarios
-1. **Insufficient Stock**: Transaction rolls back when requested quantity exceeds available stock
-2. **Entity Not Found**: Transaction rolls back when referenced entities don't exist
-3. **Database Constraints**: Transaction rolls back on unique constraint violations
-
-## Caching Strategy
-
-### Configuration
-Caching is implemented using **Caffeine** cache with the following settings:
-- Maximum cache size: 500 entries per cache
-- Expiration: 10 minutes after write
-
-### Cache Names
-| Cache Name | Purpose |
-|------------|---------|
-| products | Individual product details |
-| categories | Category information |
-| users | User profiles |
-| inventories | Stock information |
-
-### Caching Annotations
-
-**@Cacheable**: Cache read operations
-```java
-@Cacheable(value = "products", key = "#productId")
-public ProductDetailDTO getProductById(Long productId) { ... }
-```
-
-**@CacheEvict**: Invalidate cache on modifications
-```java
-@CacheEvict(value = "products", key = "#productId")
-public ProductDTO updateProduct(Long productId, AddProductRequest request) { ... }
-
-@CacheEvict(value = "products", allEntries = true)
-public ProductDTO createProduct(AddProductRequest request) { ... }
-```
-
-### Cache Eviction Strategy
-- **Single Entry**: Update/Delete operations evict specific cache entry
-- **All Entries**: Create operations evict all entries to ensure consistency
-
-## Database Indexes
-
-Indexes are defined on frequently queried columns:
-
-| Table | Index | Columns |
-|-------|-------|---------|
-| products | idx_product_name | product_name |
-| products | idx_product_category | category_id |
-| orders | idx_order_user | user_id |
-| inventories | idx_inventory_quantity | stock_quantity |
-
-## Performance Optimizations
-
-### Query Optimization
-1. **EntityGraph**: Eager loading for frequently accessed relationships
-   ```java
-   @EntityGraph(attributePaths = {"category"})
-   Page<Product> findAll(Pageable pageable);
+2. **Run**
+   ```bash
+   ./mvnw spring-boot:run
    ```
 
-2. **Pagination**: All list endpoints support pagination to limit data transfer
-   ```java
-   Page<Product> products = productRepository.findAll(
-       PageRequest.of(page, size, Sort.by(direction, sortBy))
-   );
-   ```
+3. **Open**
+   - Swagger UI: `http://localhost:8080/swagger-ui.html`
+   - Register: `POST /api/users/register` (body: username, email, password; role optional, defaults to CUSTOMER).
+   - Login: `POST /auth/login` (username, password) → returns JWT.
+   - Use the JWT in **Authorization: Bearer \<token\>** for protected endpoints.
 
-3. **Read-Only Transactions**: Optimized for read operations
-   ```java
-   @Transactional(readOnly = true)
-   public Page<ProductDTO> getProducts(...) { ... }
-   ```
+## Authentication & Authorization
 
-### Performance Comparison
+| Mechanism        | Use case                          |
+|------------------|-----------------------------------|
+| **JWT**          | Username/password login, API access |
+| **OAuth2 (Google)** | Social login; user created/persisted, then JWT issued via redirect |
 
-| Operation | Without Optimization | With Optimization |
-|-----------|---------------------|-------------------|
-| Product List (100 items) | ~150ms | ~45ms (with caching) |
-| Product Detail | ~30ms | ~5ms (cached) |
-| Category List | ~25ms | ~3ms (cached) |
-| Order with Items | ~80ms | ~60ms (EntityGraph) |
+- **Public:** `POST /auth/login`, `POST /api/users/register`, `GET /api/products`, `GET /api/category`, OAuth2 callback, Swagger, `/v3/api-docs`.
+- **Authenticated:** All other `/api/*` and `/graphql` require a valid JWT (or session after OAuth2 redirect).
+- **RBAC:** Roles `ADMIN`, `STAFF`, `CUSTOMER`. Endpoints are restricted with `@PreAuthorize` (e.g. user management and order status → ADMIN/STAFF; customers see only their orders).
 
-## API Endpoints
+## CORS and CSRF
 
-### Products
-- `GET /api/products` - List products (paginated)
-- `GET /api/products/{id}` - Get product details
-- `POST /api/products` - Create product
-- `PUT /api/products/{id}` - Update product
-- `DELETE /api/products/{id}` - Delete product
+### CORS (Cross-Origin Resource Sharing)
 
-### Orders
-- `GET /api/orders` - List orders (paginated)
-- `GET /api/orders/{id}` - Get order details
-- `POST /api/orders` - Create order
-- `PUT /api/orders/{id}/status` - Update order status
-- `DELETE /api/orders/{id}` - Delete order
+- **Purpose:** Controls which **origins** (e.g. `https://myapp.com`) can call your API from the browser.
+- **Configured:** Global CORS allows `http://localhost:*`, common headers, and methods (GET, POST, PUT, PATCH, DELETE, OPTIONS). Other origins are rejected.
+- **Testing:** From a web app on another port (e.g. `http://localhost:3000`), the browser sends an `Origin` header; the server allows or denies based on CORS. In **Postman** there is no browser origin, so CORS does not apply to Postman-only flows.
 
-### Order Items
-- `POST /api/order-items` - Add item to order (validates stock)
-- `PUT /api/order-items/{id}` - Update item quantity
-- `DELETE /api/order-items/{id}` - Remove item from order
+### CSRF (Cross-Site Request Forgery)
 
-### Categories, Users, Reviews, Inventory
-Full CRUD endpoints available at respective paths.
+- **Purpose:** Stops attackers from submitting forms (or state-changing requests) on behalf of a logged-in user when the browser automatically sends cookies.
+- **This API:** CSRF is **disabled** because we use **stateless JWT** in the `Authorization` header. There are no session cookies; each request is authenticated by the token. So CSRF protection is not required for these APIs.
+- **When to enable CSRF:** Use it for **stateful** apps that rely on **cookie-based sessions** (e.g. server-rendered forms, browser posting with session cookie). Then the server issues a CSRF token per session and the client must send it back (e.g. in header or form field) for state-changing requests.
 
-## Order Flow
+### Summary
 
-1. **Create Order**: Initialize empty order for user
-2. **Add Items**: Each item validates stock and deducts inventory
-3. **Auto-calculate Total**: Order total updates automatically
-4. **Status Updates**: Cancellation restores inventory
-5. **Delete**: Restores inventory before deletion
+| Concern | CORS | CSRF |
+|--------|------|------|
+| **What** | Who can call the API from a browser (origin) | Who can submit state-changing requests using the user’s session |
+| **Relevant when** | Any browser client from another origin | Cookie-based sessions and form submissions |
+| **This project** | Allowed origins configured; Postman unaffected | Disabled for stateless JWT APIs |
 
-## Testing
+## Testing with Postman
 
-### Postman Collection
-Import the OpenAPI spec from `/swagger-ui.html` to generate collection.
+1. **Register**
+   - `POST {{base}}/api/users/register`
+   - Body (JSON): `{"username":"testuser","email":"test@example.com","password":"Test@1234","role":"CUSTOMER"}`
 
-### Test Scenarios
-1. **Stock Validation**: Try ordering more than available stock
-2. **Transaction Rollback**: Verify stock restoration on cancellation
-3. **Cache Verification**: Check response times on repeated requests
-4. **Pagination**: Test with various page sizes and sort options
+2. **Login**
+   - `POST {{base}}/auth/login`
+   - Body: `{"username":"testuser","password":"Test@1234"}`
+   - Copy `data.token` from the response.
 
-## Error Handling
+3. **Protected endpoints**
+   - Add header: **Authorization** = `Bearer <paste token>`.
+   - Examples: `GET /api/orders`, `GET /api/users` (ADMIN), `POST /api/orders`, etc.
 
-| Exception | HTTP Status | Description |
-|-----------|-------------|-------------|
-| NotFoundException | 404 | Resource not found |
-| InsufficientStockException | 400 | Requested quantity exceeds stock |
-| DataIntegrityViolationException | 409 | Duplicate key or constraint violation |
-| MethodArgumentNotValidException | 400 | Validation errors |
+4. **Roles**
+   - Create users with different roles (e.g. via DB or register with role CUSTOMER; ADMIN/STAFF created by admin or DB). Call admin-only endpoints (e.g. `GET /api/users`) with an ADMIN JWT.
+
+5. **Invalid/expired token**
+   - Send an invalid or expired JWT → expect **401 Unauthorized**.
+
+## Google OAuth2
+
+1. Create OAuth2 credentials in Google Cloud Console (Web application), set redirect URI:  
+   `http://localhost:8080/login/oauth2/code/google`.
+2. Set env: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+3. In browser: `http://localhost:8080/oauth2/authorization/google`.
+4. After login, you are redirected to `app.oauth2.redirect-uri` with `?token=<JWT>` (default: `http://localhost:8080/oauth2-redirect`). Use this token in **Authorization: Bearer** for API calls.
+
+## Security Features
+
+- **Passwords:** Stored with **BCrypt** (Spring Security’s `BCryptPasswordEncoder`).
+- **JWT:** Signed with **HMAC-SHA256**; contains subject (username), roles, issued-at, expiration. Tampered or expired tokens → **401**.
+- **Token blacklist:** Logout adds the JWT to an in-memory blacklist (revoked tokens rejected).
+- **Logging:** Authentication success/failure events are logged (e.g. for auditing and brute-force detection). Check logs for `SECURITY_AUTH_SUCCESS` and `SECURITY_AUTH_FAILURE`.
+
+## API Documentation
+
+- **OpenAPI (Swagger):** `http://localhost:8080/swagger-ui.html`
+- Secured endpoints are documented with the **bearerAuth** scheme; use **Authorize** in Swagger UI with the JWT from `/auth/login`.
+
+## Configuration
+
+- **JWT:** `app.jwt.secret` (min 32 chars in production), `app.jwt.expiration-ms`.
+- **OAuth2 redirect:** `app.oauth2.redirect-uri`.
+- **CORS:** See `SecurityConfig#corsConfigSource()` to adjust allowed origins and methods.

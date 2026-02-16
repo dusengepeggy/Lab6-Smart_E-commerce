@@ -12,6 +12,7 @@ import org.ecommerce.v1.service.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -57,6 +58,7 @@ public class ProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<ProductDTO>> createProduct(@Valid @RequestBody AddProductRequest request) {
         ProductDTO product = productService.createProduct(request);
         SuccessResponse<ProductDTO> res = new SuccessResponse<>("Product created successfully", product);
@@ -64,6 +66,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<ProductDTO>> updateProduct(
             @PathVariable Long id,
             @RequestBody AddProductRequest request
@@ -74,6 +77,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<String>> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         SuccessResponse<String> res = new SuccessResponse<>("Product deleted successfully");

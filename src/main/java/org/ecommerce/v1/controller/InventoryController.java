@@ -12,6 +12,7 @@ import org.ecommerce.v1.service.InventoryService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<InventoryDTO>> createInventory(@RequestBody CreateInventoryRequest request) {
         Inventory inventory = inventoryService.createInventory(request.getProductId(), request.getStockQuantity());
         SuccessResponse<InventoryDTO> res = new SuccessResponse<>("Inventory created successfully", convertToDTO(inventory));
@@ -71,6 +73,7 @@ public class InventoryController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<InventoryDTO>> updateInventory(
             @PathVariable Long id,
             @RequestBody UpdateInventoryRequest request
@@ -81,6 +84,7 @@ public class InventoryController {
     }
 
     @PatchMapping("/product/{productId}/adjust")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<InventoryDTO>> adjustStock(
             @PathVariable Long productId,
             @RequestParam Long delta
@@ -91,6 +95,7 @@ public class InventoryController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<String>> deleteInventory(@PathVariable Long id) {
         inventoryService.deleteInventory(id);
         SuccessResponse<String> res = new SuccessResponse<>("Inventory deleted successfully");
