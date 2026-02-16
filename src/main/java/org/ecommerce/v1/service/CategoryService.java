@@ -1,6 +1,8 @@
 package org.ecommerce.v1.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryDTO createCategory(UpdateCategoryRequest request) {
         if (categoryRepository.existsByCategoryName(request.getCategoryName())) {
             throw new IllegalArgumentException("Category name already exists");
@@ -33,6 +36,7 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "#categoryId")
     public CategoryDTO getCategoryById(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
@@ -61,6 +65,7 @@ public class CategoryService {
         return categories.map(this::convertToDto);
     }
 
+    @CacheEvict(value = "categories", key = "#categoryId")
     public CategoryDTO updateCategory(Long categoryId, UpdateCategoryRequest request) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
@@ -71,6 +76,7 @@ public class CategoryService {
         return convertToDto(category);
     }
 
+    @CacheEvict(value = "categories", key = "#categoryId")
     public void deleteCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not found"));

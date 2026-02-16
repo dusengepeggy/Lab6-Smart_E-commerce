@@ -1,0 +1,102 @@
+type Product {
+  id: ID!
+  name: String!
+  description: String
+  price: Float!
+  categoryName: String!
+}
+
+type ProductDetail {
+  id: ID!
+  productName: String!
+  description: String
+  price: Float!
+  categoryName: String!
+  stockQuantity: Int
+}
+
+type PagedProductResponse {
+  items: [Product!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+}
+
+type OrderItem {
+  id: ID!
+  orderId: ID!
+  productId: ID!
+  productName: String!
+  quantity: Int!
+  unitPrice: Float!
+}
+
+type Order {
+  id: ID!
+  userId: ID!
+  username: String!
+  status: String!
+  totalAmount: Float!
+  createdAt: String
+  items: [OrderItem!]!
+}
+
+type PagedOrderResponse {
+  items: [Order!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+}
+
+type Review {
+  id: ID!
+  userId: ID!
+  username: String!
+  productId: ID!
+  productName: String!
+  rating: Int!
+  comment: String
+  createdAt: String
+}
+
+type PagedReviewResponse {
+  items: [Review!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+}
+
+type Inventory {
+  id: ID!
+  productId: ID!
+  productName: String!
+  stockQuantity: Int!
+}
+
+type PagedInventoryResponse {
+  items: [Inventory!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+}
+
+type Query {
+  products(page: Int, size: Int, categoryId: ID, q: String, minPrice: Float, maxPrice: Float, sortBy: String, sortDir: String): PagedProductResponse!
+  product(id: ID!): ProductDetail
+
+  orders(page: Int, size: Int, userId: ID, status: String, sortBy: String, sortDir: String): PagedOrderResponse!
+  order(id: ID!): Order
+
+  reviews(page: Int, size: Int, productId: ID, userId: ID, sortBy: String, sortDir: String): PagedReviewResponse!
+  review(id: ID!): Review
+}
+
+type Mutation {
+  createReview(userId: ID!, productId: ID!, rating: Int!, comment: String): Review!
+  updateReview(id: ID!, rating: Int, comment: String): Review!
+  deleteReview(id: ID!): Boolean!
+}

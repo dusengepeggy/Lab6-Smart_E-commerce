@@ -12,6 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -23,7 +25,9 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final OrderItemService orderItemService;
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public Order createOrder(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with ID " + userId + " not found"));
@@ -65,25 +69,30 @@ public class OrderService {
         return orderRepository.findAll(pageable);
     }
 
+    @Transactional(isolation = Isolation.REPEATABLE_READ, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public Order updateOrderStatus(Long orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order with ID " + orderId + " not found"));
+
+        OrderStatus previousStatus = order.getStatus();
+        
+        if (status == OrderStatus.Cancelled && previousStatus != OrderStatus.Cancelled) {
+            orderItemService.restoreStockForOrder(orderId);
+        }
 
         order.setStatus(status);
         return order;
     }
 
-    public Order updateOrderTotalAmount(Long orderId, BigDecimal totalAmount) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order with ID " + orderId + " not found"));
-
-        order.setTotalAmount(totalAmount);
-        return order;
-    }
-
+    @Transactional(isolation = Isolation.REPEATABLE_READ, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void deleteOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order with ID " + orderId + " not found"));
+        
+        if (order.getStatus() != OrderStatus.Cancelled) {
+            orderItemService.restoreStockForOrder(orderId);
+        }
+        
         orderRepository.delete(order);
     }
 }

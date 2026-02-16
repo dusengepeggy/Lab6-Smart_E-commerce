@@ -2,6 +2,8 @@ package org.ecommerce.v1.service;
 
 import lombok.RequiredArgsConstructor;
 import org.ecommerce.v1.utils.exceptions.NotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
+    @CacheEvict(value = "products", allEntries = true)
     public ProductDTO createProduct(AddProductRequest request) {
 
         Category category = categoryRepository.findById(request.getCategoryId())
@@ -40,6 +43,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "products", key = "#productId")
     public ProductDetailDTO getProductById(Long productId) {
 
         Product product = productRepository.findById(productId)
@@ -78,6 +82,7 @@ public class ProductService {
         return products.map(this::convertToDTO);
     }
 
+    @CacheEvict(value = "products", key = "#productId")
     public ProductDTO updateProduct(Long productId, AddProductRequest request) {
 
         Product product = productRepository.findById(productId)
@@ -96,6 +101,7 @@ public class ProductService {
         return convertToDTO(product);
     }
 
+    @CacheEvict(value = "products", key = "#productId")
     public void deleteProduct(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
@@ -119,6 +125,7 @@ public class ProductService {
         dto.setProductName(product.getProductName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
+        dto.setCategoryId(product.getCategory().getId());
         dto.setCategoryName(product.getCategory().getCategoryName());
 
 //        if (product.getInventory() != null) {

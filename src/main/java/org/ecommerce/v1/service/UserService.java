@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.ecommerce.v1.entity.Role;
 import org.ecommerce.v1.utils.exceptions.NotFoundException;
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    @CacheEvict(value = "users", allEntries = true)
     public UserDTO register(RegisterRequest request) {
 
         String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
@@ -65,12 +68,14 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "users", key = "#userId")
     public UserDTO getUserById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with ID " + userId + " not found"));
         return convertToDto(user);
     }
 
+    @CacheEvict(value = "users", key = "#userId")
     public UserDTO updateUser(Long userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with ID " + userId + " not found"));
@@ -81,6 +86,7 @@ public class UserService {
         return convertToDto(user);
     }
 
+    @CacheEvict(value = "users", key = "#userId")
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with ID " + userId + " not found"));

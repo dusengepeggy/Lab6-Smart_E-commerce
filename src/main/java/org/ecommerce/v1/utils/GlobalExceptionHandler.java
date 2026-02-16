@@ -1,7 +1,8 @@
 package org.ecommerce.v1.utils;
 
-import com.example.e_commerce.dto.JsonResponseDto.ErrorResponse;
-import com.example.e_commerce.utils.exceptions.NotFoundException;
+import org.ecommerce.v1.dto.JsonResponseDto.ErrorResponse;
+import org.ecommerce.v1.utils.exceptions.InsufficientStockException;
+import org.ecommerce.v1.utils.exceptions.NotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -71,7 +72,19 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
-    @ExceptionHandler({EmptyResultDataAccessException.class,NotFoundException.class})
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientStock(InsufficientStockException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage(),
+                LocalDateTime.now().toString(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler({EmptyResultDataAccessException.class, NotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),

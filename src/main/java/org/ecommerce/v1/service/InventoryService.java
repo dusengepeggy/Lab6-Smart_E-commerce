@@ -6,6 +6,8 @@ import org.ecommerce.v1.entity.Product;
 import org.ecommerce.v1.repository.InventoryRepository;
 import org.ecommerce.v1.repository.ProductRepository;
 import org.ecommerce.v1.utils.exceptions.NotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
 
+    @CacheEvict(value = "inventories", allEntries = true)
     public Inventory createInventory(Long productId, Long stockQuantity) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product with ID " + productId + " not found"));
@@ -33,12 +36,14 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "inventories", key = "#inventoryId")
     public Inventory getInventoryById(Long inventoryId) {
         return inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new NotFoundException("Inventory with ID " + inventoryId + " not found"));
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "inventories", key = "'product_' + #productId")
     public Inventory getInventoryByProductId(Long productId) {
         return inventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> new NotFoundException("Inventory for product ID " + productId + " not found"));
@@ -56,6 +61,7 @@ public class InventoryService {
         return inventoryRepository.findAll(pageable);
     }
 
+    @CacheEvict(value = "inventories", allEntries = true)
     public Inventory updateInventoryStock(Long inventoryId, Long stockQuantity) {
         Inventory inventory = inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new NotFoundException("Inventory with ID " + inventoryId + " not found"));
@@ -64,6 +70,7 @@ public class InventoryService {
         return inventory;
     }
 
+    @CacheEvict(value = "inventories", allEntries = true)
     public Inventory adjustStockByProductId(Long productId, Long quantityDelta) {
         Inventory inventory = inventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> new NotFoundException("Inventory for product ID " + productId + " not found"));
@@ -76,6 +83,7 @@ public class InventoryService {
         return inventory;
     }
 
+    @CacheEvict(value = "inventories", key = "#inventoryId")
     public void deleteInventory(Long inventoryId) {
         Inventory inventory = inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new NotFoundException("Inventory with ID " + inventoryId + " not found"));
