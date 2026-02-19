@@ -36,7 +36,7 @@ public class Order extends BaseEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @OneToMany(mappedBy = "order" , fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order" , fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<OrderItem> orderItems = new ArrayList<>();
 
 }

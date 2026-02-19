@@ -30,7 +30,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = userRepository.findByOauth2ProviderAndOauth2Subject(provider, subject)
                 .orElseGet(() -> {
                     User newUser = new User();
-                    newUser.setUsername(email != null ? email : "oauth_" + subject);
+                    newUser.setUsername(email != null ? email : "oauth_" + subject.split("@")[0]);
                     newUser.setEmail(email != null ? email : "oauth_" + subject + "@oauth.local");
                     newUser.setPassword(null);
                     newUser.setRole(Role.CUSTOMER);
