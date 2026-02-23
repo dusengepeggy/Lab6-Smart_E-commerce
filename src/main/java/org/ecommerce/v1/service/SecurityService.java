@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 @Service("securityService")
 @RequiredArgsConstructor
-public class SecurityService {
+ public class SecurityService {
 
     private final OrderRepository orderRepository;
     private final ReviewRepository reviewRepository;
