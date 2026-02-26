@@ -123,6 +123,22 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>jfr</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <jvmArguments>-XX:StartFlightRecording=filename=./baseline.jfr,duration=60s,settings=profile</jvmArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <build>
         <plugins>
             <plugin>

@@ -33,11 +33,13 @@ public class OrderController {
     private final OrderService orderService;
     private final OrderItemService orderItemService;
     private final SecurityService securityService;
+    private final org.ecommerce.v1.service.RecentActivityBuffer recentActivityBuffer;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public ResponseEntity<SuccessResponse<OrderDTO>> createOrder(@RequestBody CreateOrderRequest request) {
         Order order = orderService.createOrder(request.getUserId());
+        recentActivityBuffer.record("ORDER_CREATED", "orderId=" + order.getId());
         SuccessResponse<OrderDTO> res = new SuccessResponse<>("Order created successfully", convertToDTO(order));
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
@@ -51,7 +53,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF', 'CUSTOMER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public ResponseEntity<SuccessResponse<PagedResponse<OrderDTO>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -85,7 +87,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN') ")
     public ResponseEntity<SuccessResponse<OrderDTO>> updateOrderStatus(
             @PathVariable Long id,
             @RequestBody UpdateOrderRequest request

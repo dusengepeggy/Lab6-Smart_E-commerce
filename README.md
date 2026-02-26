@@ -9,6 +9,17 @@ REST (and GraphQL) backend with **JWT authentication**, **Google OAuth2**, **RBA
 - **BCrypt** password hashing, **HMAC-SHA256** JWT signatures
 - **PostgreSQL**, JPA
 
+## Lab 8 – Performance (Advanced Optimization)
+
+Profiling (JFR), async (CompletableFuture, `@EnableAsync`), concurrency (ConcurrentHashMap, CopyOnWriteArrayList), caching, and metrics are implemented for the Smart E-Commerce lab. See **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)** for:
+
+- How to run with Java Flight Recorder and capture baseline metrics
+- Actuator and custom metrics endpoints
+- DSA/caching notes and report template
+- Postman load-testing steps
+
+New endpoints: `GET /api/dashboard/stats`, `GET /api/dashboard/activity`, `GET /api/dashboard/metrics` (ADMIN).
+
 ## Quick Start
 
 1. **Environment**

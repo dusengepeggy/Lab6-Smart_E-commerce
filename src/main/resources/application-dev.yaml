@@ -34,13 +34,22 @@ spring:
 app:
   jwt:
     secret: ${APP_JWT_SECRET}
-    expiration-ms: 86400000
+    expiration-ms: 86400000 
   oauth2:
     redirect-uri: ${OAUTH2_REDIRECT_URI}
 
 springdoc:
   swagger-ui:
     enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
 
 logging:
   level:
